@@ -1,0 +1,189 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+
+  "Description": "CORE-WEB-APP BY LOOPS",
+  "Parameters": {
+    "AppName": {
+      "Type": "String",
+      "Default": "new.loops.app",
+      "Description": "Name of the app in S3 bucket to create"
+    },
+    "Environment": {
+      "Type": "String",
+      "Default": "dev",
+      "AllowedValues": [
+        "dev",
+        "qa",
+        "prod"
+      ],
+      "Description": "Environment to deploy to"
+    },
+    "HostedZoneId": {
+      "Type": "String",
+      "Default": "Z2FDTNDATAQYW2",
+      "Description": "Hosted Zone Id for the domain"
+    }
+  },
+  "Resources": {
+    "APPBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": {
+          "Fn::Sub": "${Environment}.${AppName}"
+        },
+        "WebsiteConfiguration": {
+          "IndexDocument": "index.html"
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": "false"
+        }
+      }
+    },
+    "APPBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "APPBucket"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:PutObject*",
+                "s3:DeleteObject*"
+              ],
+              "Principal": "*",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Sub": "arn:aws:s3:::${Environment}.${AppName}/*"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "Certificate": {
+      "Type": "AWS::CertificateManager::Certificate",
+      "Properties": {
+        "DomainName": {
+          "Fn::Join": [
+            ".",
+            [
+              {
+                "Ref": "Environment"
+              },
+              {
+                "Ref": "AppName"
+              }
+            ]
+          ]
+        },
+        "ValidationMethod": "DNS",
+        "DomainValidationOptions": [
+          {
+            "DomainName": {
+              "Fn::Sub": "${Environment}.${AppName}"
+            },
+            "ValidationDomain": {
+              "Fn::Sub": "${Environment}.${AppName}"
+            }
+          }
+        ]
+      }
+    },
+    "CloudfrontDistribution": {
+      "DependsOn": [
+        "APPBucket"
+      ],
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig": {
+          "Origins": [
+            {
+              "Id": {
+                "Fn::GetAtt": [
+                  "APPBucket",
+                  "DomainName"
+                ],
+                "CustomOriginConfig": {
+                  "HTTPPort": "80",
+                  "HTTPSPort": "443",
+                  "OriginProtocolPolicy": "http-only"
+                },
+                "S3OriginConfig": {
+                  "OriginAccessIdentity": ""
+                }
+              }
+            }
+          ],
+          "Aliases": [
+            {
+              "Fn::GetAtt": [
+                "APPBucket",
+                "DomainName"
+              ]
+            }
+          ],
+          "Enabled": "true",
+          "httpVersion": "http2",
+          "PriceClass": "PriceClass_100",
+          "DefaultRootObject": "index.html",
+          "DefaultCacheBehavior": {
+            "compress": "true",
+            "TargetOriginId": {
+              "Fn::GetAtt": [
+                "APPBucket",
+                "DomainName"
+              ]
+            },
+            "ForwardedValues": {
+              "QueryString": "false",
+              "Cookies": {
+                "Forward": "none"
+              }
+            },
+            "viewerProtocolPolicy": "redirect-to-https"
+          },
+          "ViewerCertificate": {
+            "AcmCertificateArn": {
+              "Ref": "Certificate"
+            },
+            "SslSupportMethod": "sni-only"
+          }
+        }
+      }
+    },
+    "APPDomainRecord": {
+      "DependsOn": [
+        "CloudfrontDistribution"
+      ],
+      "Type": "AWS::Route53::RecordSetGroup",
+      "Properties": {
+        "HostedZoneId": {
+          "Ref": "HostedZoneId"
+        },
+        "RecordSets": [
+          {
+            "Type": "A",
+            "Name": {
+              "Ref": "AppName"
+            },
+            "AliasTarget": {
+              "HostedZoneId": {
+                "Ref": "HostedZoneId"
+              },
+              "DNSName": {
+                "Fn::GetAtt": [
+                  "CloudfrontDistribution",
+                  "DomainName"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
