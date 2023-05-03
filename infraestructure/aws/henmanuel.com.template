@@ -105,57 +105,48 @@
       "Type": "AWS::CloudFront::Distribution",
       "Properties": {
         "DistributionConfig": {
+          "Enabled": "true",
+          "Comment": {
+            "Fn::Sub": "${Environment}.${AppName}"
+          },
           "Origins": [
             {
-              "Id": {
+              "Id": "S3Origin",
+              "DomainName": {
                 "Fn::GetAtt": [
                   "APPBucket",
                   "DomainName"
-                ],
-                "CustomOriginConfig": {
-                  "HTTPPort": "80",
-                  "HTTPSPort": "443",
-                  "OriginProtocolPolicy": "http-only"
-                },
-                "S3OriginConfig": {
-                  "OriginAccessIdentity": ""
-                }
+                ]
+              },
+              "S3OriginConfig": {
+                "OriginAccessIdentity": ""
               }
             }
           ],
           "Aliases": [
             {
-              "Fn::GetAtt": [
-                "APPBucket",
-                "DomainName"
-              ]
+              "Fn::Sub": "${Environment}.${AppName}"
             }
           ],
-          "Enabled": "true",
-          "HttpVersion": "http2",
-          "PriceClass": "PriceClass_All",
           "DefaultRootObject": "index.html",
           "DefaultCacheBehavior": {
-            "compress": "true",
-            "TargetOriginId": {
-              "Fn::GetAtt": [
-                "APPBucket",
-                "DomainName"
-              ]
-            },
+            "MinTTL": "0",
+            "MaxTTL": "5",
+            "DefaultTTL": "5",
+            "Compress": "true",
+            "TargetOriginId": "S3Origin",
+            "ViewerProtocolPolicy": "redirect-to-https",
+            "AllowedMethods": [
+              "GET",
+              "HEAD",
+              "OPTIONS"
+            ],
             "ForwardedValues": {
               "QueryString": "false",
               "Cookies": {
                 "Forward": "none"
               }
-            },
-            "viewerProtocolPolicy": "redirect-to-https"
-          },
-          "ViewerCertificate": {
-            "AcmCertificateArn": {
-              "Ref": "Certificate"
-            },
-            "SslSupportMethod": "sni-only"
+            }
           }
         }
       }
