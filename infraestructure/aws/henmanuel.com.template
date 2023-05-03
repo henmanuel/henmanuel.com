@@ -1,7 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Transform": "AWS::Serverless-2016-10-31",
-
   "Description": "CORE-WEB-APP BY LOOPS",
   "Parameters": {
     "AppName": {
@@ -64,22 +63,28 @@
         }
       }
     },
+    "HostedZone": {
+      "Type": "AWS::Route53::HostedZone",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${Environment}.${AppName}"
+        }
+      }
+    },
     "Certificate": {
+      "DependsOn": [
+        "HostedZone"
+      ],
       "Type": "AWS::CertificateManager::Certificate",
       "Properties": {
         "DomainName": {
-          "Fn::Join": [
-            ".",
-            [
-              {
-                "Ref": "Environment"
-              },
-              {
-                "Ref": "AppName"
-              }
-            ]
-          ]
+          "Fn::Sub": "${Environment}.${AppName}"
         },
+        "SubjectAlternativeNames": [
+          {
+            "Fn::Sub": "*.${Environment}.${AppName}"
+          }
+        ],
         "ValidationMethod": "DNS",
         "DomainValidationOptions": [
           {
@@ -95,7 +100,7 @@
     },
     "CloudfrontDistribution": {
       "DependsOn": [
-        "APPBucket"
+        "Certificate"
       ],
       "Type": "AWS::CloudFront::Distribution",
       "Properties": {
@@ -127,8 +132,8 @@
             }
           ],
           "Enabled": "true",
-          "httpVersion": "http2",
-          "PriceClass": "PriceClass_100",
+          "HttpVersion": "http2",
+          "PriceClass": "PriceClass_All",
           "DefaultRootObject": "index.html",
           "DefaultCacheBehavior": {
             "compress": "true",

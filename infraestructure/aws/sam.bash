@@ -29,8 +29,10 @@ then
       Region="us-east-1"
 fi
 
+StackName=${APPName/./-}
 TemplateName=${APPName}.template
 BucketName=$Environment.${APPName}-deploy
 DeploymentBucketName=$Environment.${APPName}-deploy
+
 aws s3api create-bucket --bucket "$BucketName" --region us-east-1
-sam deploy -t "$TemplateName" --stack-name QA-henmanuel-com --s3-bucket "$DeploymentBucketName" --region $Region --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM --parameter-overrides AppName="$APPName" Environment="$Environment" Region="$Region"
+sam deploy -t "$TemplateName" --stack-name "${Environment}-${StackName}" --s3-bucket "$DeploymentBucketName" --region $Region --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM --parameter-overrides AppName="$APPName" Environment="$Environment" Region="$Region" HostedZoneId="Z1Q1Q9DZ1Q1Q9D"
