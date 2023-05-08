@@ -178,7 +178,9 @@
             },
             "Type": "A",
             "AliasTarget": {
-              "HostedZoneId": "Z2FDTNDATAQYW2",
+              "HostedZoneId": {
+                "Ref": "HostedZoneId"
+              },
               "DNSName": {
                 "Fn::GetAtt": [
                   "CloudfrontDistribution",
