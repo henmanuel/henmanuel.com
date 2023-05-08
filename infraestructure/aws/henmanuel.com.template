@@ -77,6 +77,7 @@
       ],
       "Type": "AWS::CertificateManager::Certificate",
       "Properties": {
+        "ValidationMethod": "DNS",
         "DomainName": {
           "Fn::Sub": "${Environment}.${AppName}"
         },
@@ -85,7 +86,6 @@
             "Fn::Sub": "*.${Environment}.${AppName}"
           }
         ],
-        "ValidationMethod": "DNS",
         "DomainValidationOptions": [
           {
             "DomainName": {
@@ -106,26 +106,18 @@
       "Properties": {
         "DistributionConfig": {
           "Enabled": "true",
-          "Comment": {
-            "Fn::Sub": "${Environment}.${AppName}"
-          },
           "Origins": [
             {
               "Id": "S3Origin",
+              "S3OriginConfig": {
+                "OriginAccessIdentity": ""
+              },
               "DomainName": {
                 "Fn::GetAtt": [
                   "APPBucket",
                   "DomainName"
                 ]
-              },
-              "S3OriginConfig": {
-                "OriginAccessIdentity": ""
               }
-            }
-          ],
-          "Aliases": [
-            {
-              "Fn::Sub": "${Environment}.${AppName}"
             }
           ],
           "DefaultRootObject": "index.html",
@@ -147,6 +139,12 @@
                 "Forward": "none"
               }
             }
+          },
+          "ViewerCertificate": {
+            "SslSupportMethod": "sni-only",
+            "AcmCertificateArn": {
+              "Ref": "Certificate"
+            }
           }
         }
       }
@@ -158,18 +156,29 @@
       "Type": "AWS::Route53::RecordSetGroup",
       "Properties": {
         "HostedZoneId": {
-          "Ref": "HostedZoneId"
+          "Fn::GetAtt": [
+            "HostedZone",
+            "Id"
+          ]
         },
         "RecordSets": [
           {
-            "Type": "A",
             "Name": {
-              "Ref": "AppName"
+              "Fn::Sub": [
+                "${Environment}.${AppName}",
+                {
+                  "Environment": {
+                    "Ref": "Environment"
+                  },
+                  "AppName": {
+                    "Ref": "AppName"
+                  }
+                }
+              ]
             },
+            "Type": "A",
             "AliasTarget": {
-              "HostedZoneId": {
-                "Ref": "HostedZoneId"
-              },
+              "HostedZoneId": "Z2FDTNDATAQYW2",
               "DNSName": {
                 "Fn::GetAtt": [
                   "CloudfrontDistribution",
