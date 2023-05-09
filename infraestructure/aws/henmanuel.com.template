@@ -105,7 +105,6 @@
       "Type": "AWS::CloudFront::Distribution",
       "Properties": {
         "DistributionConfig": {
-          "Enabled": "true",
           "Origins": [
             {
               "Id": "S3Origin",
@@ -120,6 +119,22 @@
               }
             }
           ],
+          "Aliases": [
+            {
+              "Fn::Sub": [
+                "${Environment}.${AppName}",
+                {
+                  "Environment": {
+                    "Ref": "Environment"
+                  },
+                  "AppName": {
+                    "Ref": "AppName"
+                  }
+                }
+              ]
+            }
+          ],
+          "Enabled": "true",
           "DefaultRootObject": "index.html",
           "DefaultCacheBehavior": {
             "MinTTL": "0",
@@ -163,6 +178,7 @@
         },
         "RecordSets": [
           {
+            "Type": "A",
             "Name": {
               "Fn::Sub": [
                 "${Environment}.${AppName}",
@@ -176,17 +192,14 @@
                 }
               ]
             },
-            "Type": "A",
             "AliasTarget": {
-              "HostedZoneId": {
-                "Ref": "HostedZoneId"
-              },
               "DNSName": {
                 "Fn::GetAtt": [
                   "CloudfrontDistribution",
                   "DomainName"
                 ]
-              }
+              },
+              "HostedZoneId": "Z2FDTNDATAQYW2"
             }
           }
         ]
