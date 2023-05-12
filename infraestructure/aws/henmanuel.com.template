@@ -9,8 +9,8 @@
       "Description": "Name of the app in S3 bucket to create"
     },
     "Environment": {
+      "Default": "",
       "Type": "String",
-      "Default": "dev",
       "Description": "Environment to deploy to"
     },
     "Region": {

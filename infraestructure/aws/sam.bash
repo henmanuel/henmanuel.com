@@ -33,16 +33,22 @@ fi
 TemplateName=${APPDomain}.template
 StackName=${Environment}${Hyphen}${APPDomain/./-}
 
+brew install awscli
+
 if [[ $Environment == "prod" ]]; then
   Environment=""
   Hyphen=""
   Dot=""
+
+  Environment="${Environment}${Dot}"
+  BucketName=${Environment}${APPDomain}-deploy
+  aws s3api create-bucket --bucket "$BucketName" --region us-east-1
+  sam deploy -t "$TemplateName" --stack-name "$StackName" --s3-bucket "$BucketName" --region $Region --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM --parameter-overrides AppName="$APPDomain" Region="$Region"
+else
+  Environment="${Environment}${Dot}"
+  BucketName=${Environment}${APPDomain}-deploy
+  aws s3api create-bucket --bucket "$BucketName" --region us-east-1
+  sam deploy -t "$TemplateName" --stack-name "$StackName" --s3-bucket "$BucketName" --region $Region --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM --parameter-overrides AppName="$APPDomain" Environment="$Environment" Region="$Region"
 fi
 
-Environment="${Environment}${Dot}"
-BucketName=${Environment}${APPDomain}-deploy
-
-brew install awscli
-aws s3api create-bucket --bucket "$BucketName" --region us-east-1
-sam deploy -t "$TemplateName" --stack-name "$StackName" --s3-bucket "$BucketName" --region $Region --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM --parameter-overrides AppName="$APPDomain" Environment="$Environment" Region="$Region"
 aws s3 sync ../../src s3://"${Environment}${APPDomain}"
