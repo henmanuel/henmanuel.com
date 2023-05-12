@@ -11,11 +11,6 @@
     "Environment": {
       "Type": "String",
       "Default": "dev",
-      "AllowedValues": [
-        "dev",
-        "qa",
-        "prod"
-      ],
       "Description": "Environment to deploy to"
     },
     "Region": {
@@ -45,7 +40,7 @@
       "Type": "AWS::S3::Bucket",
       "Properties": {
         "BucketName": {
-          "Fn::Sub": "${Environment}.${AppName}"
+          "Fn::Sub": "${Environment}${AppName}"
         },
         "WebsiteConfiguration": {
           "IndexDocument": "index.html"
@@ -72,7 +67,7 @@
               "Principal": "*",
               "Effect": "Allow",
               "Resource": {
-                "Fn::Sub": "arn:aws:s3:::${Environment}.${AppName}/*"
+                "Fn::Sub": "arn:aws:s3:::${Environment}${AppName}/*"
               }
             }
           ]
@@ -83,7 +78,7 @@
       "Type": "AWS::Route53::HostedZone",
       "Properties": {
         "Name": {
-          "Fn::Sub": "${Environment}.${AppName}"
+          "Fn::Sub": "${Environment}${AppName}"
         }
       }
     },
@@ -95,20 +90,20 @@
       "Properties": {
         "ValidationMethod": "DNS",
         "DomainName": {
-          "Fn::Sub": "${Environment}.${AppName}"
+          "Fn::Sub": "${Environment}${AppName}"
         },
         "SubjectAlternativeNames": [
           {
-            "Fn::Sub": "*.${Environment}.${AppName}"
+            "Fn::Sub": "*.${Environment}${AppName}"
           }
         ],
         "DomainValidationOptions": [
           {
             "DomainName": {
-              "Fn::Sub": "${Environment}.${AppName}"
+              "Fn::Sub": "${Environment}${AppName}"
             },
             "ValidationDomain": {
-              "Fn::Sub": "${Environment}.${AppName}"
+              "Fn::Sub": "${Environment}${AppName}"
             }
           }
         ]
@@ -138,7 +133,7 @@
           "Aliases": [
             {
               "Fn::Sub": [
-                "${Environment}.${AppName}",
+                "${Environment}${AppName}",
                 {
                   "Environment": {
                     "Ref": "Environment"
@@ -197,7 +192,7 @@
             "Type": "A",
             "Name": {
               "Fn::Sub": [
-                "${Environment}.${AppName}",
+                "${Environment}${AppName}",
                 {
                   "Environment": {
                     "Ref": "Environment"
